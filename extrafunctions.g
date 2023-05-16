@@ -9,7 +9,7 @@ ann:=Annihilator(B); #construct Annihilator
 quot:=B/ann; #Construct factorbrace B/ann(B)
 s2:=Size(quot);
 while s2<s do
-  s:=ShallowCopy(s2);
+  s:=s2;
   ann:=Annihilator(quot);
   quot:=quot/ann;
   s2:=Size(quot);
