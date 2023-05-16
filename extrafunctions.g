@@ -183,7 +183,7 @@ IsSolvableBrace:=function(B)
 end;
 
 ConjectureChecker:=function(n)
-  local nr, Br, conje;
+  local i, nr, Br, conje;
   nr:=NrSmallSkewbraces(n);
   for i in [1..nr] do
     Br:=SmallSkewbrace(n,nr);
