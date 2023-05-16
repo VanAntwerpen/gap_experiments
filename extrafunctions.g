@@ -44,9 +44,7 @@ FactorsAnnSeries:=function(B)
     Add(l,new);
     old:=ShallowCopy(new);
     new:=Quotient(old,Annihilator(old));
-  elif Size(old)=Size(new) and Size(new)=1 then
-    done:=true;
-  elif Size(old)=Size(new) and Size(new)<>1 then
+  else
     done:=true;
   fi;
 until done;
@@ -68,9 +66,7 @@ FittingSeries:=function(B)
     Add(l,new);
     old:=ShallowCopy(new);
     new:=Quotient(old,FittingBrace(old));
-  elif Size(old)=Size(new) and Size(new)=1 then
-    done:=true;
-  elif Size(old)=Size(new) and Size(new)<>1 then
+  else
     done:=true;
   fi;
 until done;
@@ -83,7 +79,7 @@ BraceCommutator:=function(B,I,J)
 tmp:=List(List(Cartesian(I,J),x->Star(x[1],x[2])),x->x![1]);
 tmp2:=List(List(Cartesian(J,I),x->Star(x[1],x[2])),x->x![1]);
 tmp3:=CommutatorSubgroup(UnderlyingAdditiveGroup(I),UnderlyingAdditiveGroup(J));
-lst:=Concatenation(tmp,tmp2,AsList(tmp3));
+lst:=Set(Concatenation(tmp,tmp2,GeneratorsOfGroup(tmp3)));
 grp:=List(Group(lst));
 return IdealGeneratedBy(B,SubSkewbrace(B,List(grp,y->SkewbraceElmConstructor(B,y))));
 end;
@@ -102,9 +98,7 @@ SolvabilitySeries:=function(B)
     Add(l,new);
     old:=ShallowCopy(new);
     new:=BraceCommutator(B,ShallowCopy(old),ShallowCopy(old));
-  elif Size(old)=Size(new) and Size(new)=1 then
-    done:=true;
-  elif Size(old)=Size(new) and Size(new)<>1 then
+  else
     done:=true;
   fi;
 until done;
@@ -125,9 +119,7 @@ DescendingCentralSeries:=function(B)
     Add(l,new);
     old:=ShallowCopy(new);
     new:=BraceCommutator(B,B,ShallowCopy(old));
-  elif Size(old)=Size(new) and Size(new)=1 then
-    done:=true;
-  elif Size(old)=Size(new) and Size(new)<>1 then
+  else
     done:=true;
   fi;
 until done;
@@ -156,9 +148,7 @@ AnnSeries:=function(B)
     iso:=IsomorphismGroups(UnderlyingAdditiveGroup(Quotient(B,old)),Range(alpha));
     newlst:=PreImages(alpha ,List(Images(iso,UnderlyingAdditiveGroup(tmp))));
     new:=SubSkewbrace(B,List(newlst,y->SkewbraceElmConstructor(B,y)));
-  elif Size(old)=Size(new) and Size(new)=Size(B) then
-    done:=true;
-  elif Size(old)=Size(new) and Size(new)<>Size(B) then
+  else
     done:=true;
   fi;
 until done;
@@ -182,15 +172,57 @@ IsSolvableBrace:=function(B)
   return Size(ser[Size(ser)])=1;
 end;
 
-ConjectureChecker:=function(n)
-  local i, nr, Br, conje;
-  nr:=NrSmallSkewbraces(n);
-  for i in [1..nr] do
-    Br:=SmallSkewbrace(n,nr);
-    if not(IsSolvableGroup(UnderlyingAdditiveGroup(Br))) or not(IsSolvable(Br)) then
-      continue;
-    fi;
-    conje:=IsSolvableBrace(Br);
-    Print("For skew brace ", n, " nr ", i," the conjecture is ", conje, "\n");
-  od;
+InfoSmallSkewbracesSearch := NewInfoClass("InfoSmallSkewbracesSearch");
+
+ConjectureCheckerVariadic:=function(f,n,r...)
+  local n1, n2, i;
+  if not Length(r) in [0..2] then
+  Error("The number of arguments must be 2,3 or 4\n" );
+fi;
+
+if not IsFunction( f ) then
+  Error("The first argument must be a function\n" );
+fi;
+
+if not IsPosInt( n ) then
+  Error("The second argument must be a positive integer\n" );
+fi;
+
+if IsBound(r[1]) then
+  n1:=r[1];
+  if not n1 in [1..NrSmallSkewbraces(n)] then
+    Error("The 3rd argument, if present, must belong to ", [1..NrSmallSkewbraces(n)], "\n" );
+  fi;
+else
+  n1:=1;
+fi;
+
+if IsBound(r[2]) then
+  n2:=r[2];
+  if not n2 in [1..NrSmallSkewbraces(n)] then
+    Error("The 4th argument, if present, must belong to ", [1..NrSmallSkewbraces(n)], "\n" );
+  elif n2 < n1 then
+    Error("The 4th argument, if present, must be greater or equal to the 3rd \n" );
+  fi;
+else
+  n2:=NrSmallSkewbraces(n);
+fi;
+
+Info(InfoSmallSkewbracesSearch, 1, "Checking skew braces ", n1, " ... ", n2, " of order ", n);
+for i in [n1..n2] do
+  if InfoLevel( InfoSmallSkewbracesSearch )>1 then
+    Print(i, "/", NrSmallSkewbraces(n), "\r");
+  fi;
+  if f(SmallSkewbrace(n,i)) then
+    Info( InfoSmallSkewbracesSearch, 1, "Discovered counterexample: SmallSkewbrace( ", n, ", ", i," )");
+    return  [n,i];
+  fi;
+od;
+Info (InfoSmallSkewbracesSearch,1, "Search completed - no counterexample discovered");
+return fail;
+end;
+
+
+  SolvableConjectureOne:=function(Br)
+    return not(IsSolvableBrace(Br)) and IsSolvableGroup(UnderlyingAdditiveGroup(Br)) and IsSolvable(Br);
 end;
