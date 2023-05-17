@@ -13,4 +13,5 @@ comment:
   behavior: default
 
 ignore:
+  - "PackageInfo.g"
   - "tst/**"  # ignore test harness code
